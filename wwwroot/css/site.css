@@ -1,0 +1,91 @@
+html {
+    font-size: 14px;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: #f2f4f7;
+    color: #222;
+}
+
+.downloader-container {
+    min-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px;
+}
+
+h1 {
+    margin-bottom: 10px;
+    font-size: 42px;
+}
+
+.subtitle {
+    color: #666;
+    margin-bottom: 30px;
+}
+
+.download-box {
+    width: 100%;
+    max-width: 650px;
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+}
+
+    .download-box label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: bold;
+    }
+
+.url-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 14px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 16px;
+    margin-bottom: 20px;
+}
+
+.options {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 25px;
+}
+
+.option {
+    flex: 1;
+}
+
+    .option select {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+    }
+
+.process-button {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 8px;
+    background: #222;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+    .process-button:hover {
+        opacity: 0.9;
+    }
+
+.status {
+    margin-top: 20px;
+    text-align: center;
+}
