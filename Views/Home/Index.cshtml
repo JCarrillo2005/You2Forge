@@ -1,52 +1,94 @@
 ﻿@{
-    ViewData["Title"] = "Media Downloader";
+    ViewData["Title"] = "MediaForge";
 }
 
-<div class="downloader-container">
+<div class="mediaforge-container">
 
-    <h1>Media Downloader</h1>
+    <div class="hero">
 
-    <p class="subtitle">
-        Descarga contenido autorizado en formato MP3 o MP4
-    </p>
+        <h1>MediaForge</h1>
 
-    <div class="download-box">
+        <p>
+            Multimedia processing made simple.
+        </p>
 
-        <label for="url">URL del contenido</label>
+    </div>
 
-        <input type="text"
-               id="url"
-               class="url-input"
-               placeholder="Pega aquí la URL..." />
+    <div class="download-card">
+
+        <div class="form-group">
+
+            <label for="mediaUrl">
+                URL del contenido
+            </label>
+
+            <input type="url"
+                   id="mediaUrl"
+                   class="form-control"
+                   placeholder="Pega aquí la URL..."
+                   autocomplete="off" />
+
+        </div>
 
         <div class="options">
 
-            <div class="option">
-                <label for="format">Formato</label>
+            <div class="form-group">
 
-                <select id="format">
-                    <option value="mp3">MP3</option>
-                    <option value="mp4">MP4</option>
+                <label for="format">
+                    Formato
+                </label>
+
+                <select id="format" class="form-control">
+
+                    <option value="mp3">
+                        MP3
+                    </option>
+
+                    <option value="mp4">
+                        MP4
+                    </option>
+
                 </select>
+
             </div>
 
-            <div class="option">
-                <label for="quality">Calidad</label>
+            <div class="form-group">
 
-                <select id="quality">
-                    <option value="128">128 kbps</option>
-                    <option value="192">192 kbps</option>
-                    <option value="320">320 kbps</option>
+                <label for="quality">
+                    Calidad
+                </label>
+
+                <select id="quality" class="form-control">
+
+                    <option value="128">
+                        128 kbps
+                    </option>
+
+                    <option value="192">
+                        192 kbps
+                    </option>
+
+                    <option value="320">
+                        320 kbps
+                    </option>
+
                 </select>
+
             </div>
 
         </div>
 
-        <button id="processButton" class="process-button">
+        <button type="button"
+                id="processButton"
+                class="process-button">
+
             Procesar
+
         </button>
 
-        <div id="status" class="status"></div>
+        <div id="statusMessage" class="status-message">
+            Esperando una URL...
+        </div>
 
     </div>
 
