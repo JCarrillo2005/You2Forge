@@ -14,45 +14,75 @@ public class YouTubeService
         _youtube = new YoutubeClient();
     }
 
-    public async Task<string> DownloadVideoAsync(string url, string format, string quality)
+    public async Task<string> DownloadVideoAsync(
+        string url,
+        string format,
+        string quality)
     {
         try
         {
-            // Get video information
+            // Obtener información del video
             var video = await _youtube.Videos.GetAsync(url);
 
-            // Get available streams
-            var streamManifest = await _youtube.Videos.Streams.GetManifestAsync(video.Id);
+            // Obtener los streams disponibles
+            var streamManifest =
+                await _youtube.Videos.Streams.GetManifestAsync(video.Id);
 
-            // Determine format and quality
-            var stream = format.ToLower() == "mp4"
-                ? GetVideoStream(streamManifest, quality)
-                : GetAudioStream(streamManifest, quality);
+            // Determinar el tipo de stream
+            IStreamInfo? stream;
+
+            if (format.Equals("mp4", StringComparison.OrdinalIgnoreCase))
+            {
+                stream = GetVideoStream(streamManifest, quality);
+            }
+            else
+            {
+                stream = GetAudioStream(streamManifest, quality);
+            }
 
             if (stream == null)
-                throw new Exception("No se encontró un stream con la calidad solicitada");
+            {
+                throw new Exception(
+                    "No se encontró un stream con la calidad solicitada.");
+            }
 
-            // Create file name (sanitized)
+            // Crear nombre seguro
             var safeTitle = SanitizeFileName(video.Title);
-            var fileExtension = format.ToLower() == "mp4" ? "mp4" : "mp3";
-            var fileName = $"{safeTitle}_{DateTime.Now:yyyyMMddHHmmss}.{fileExtension}";
-            var downloadPath = Path.Combine(_environment.WebRootPath, "downloads", fileName);
 
-            // Ensure the directory exists
-            Directory.CreateDirectory(Path.GetDirectoryName(downloadPath)!);
+            var fileExtension =
+                format.Equals("mp4", StringComparison.OrdinalIgnoreCase)
+                    ? "mp4"
+                    : "mp3";
 
-            // Download the file
-            await _youtube.Videos.Streams.DownloadAsync(stream, downloadPath);
+            var fileName = $"{safeTitle}.{fileExtension}";
+
+            // Carpeta temporal de descargas
+            var downloadDirectory =
+                Path.Combine(_environment.WebRootPath, "downloads");
+
+            Directory.CreateDirectory(downloadDirectory);
+
+            var downloadPath =
+                Path.Combine(downloadDirectory, fileName);
+
+            // Descargar stream
+            await _youtube.Videos.Streams.DownloadAsync(
+                stream,
+                downloadPath);
 
             return $"/downloads/{fileName}";
         }
         catch (Exception ex)
         {
-            throw new Exception($"Error al descargar: {ex.Message}");
+            throw new Exception(
+                $"Error al procesar el contenido: {ex.Message}",
+                ex);
         }
     }
 
-    private IStreamInfo? GetVideoStream(StreamManifest manifest, string quality)
+    private IStreamInfo? GetVideoStream(
+        StreamManifest manifest,
+        string quality)
     {
         try
         {
@@ -69,40 +99,56 @@ public class YouTubeService
                 _ => 720
             };
 
-            var videoStreams = manifest.GetVideoStreams().ToList();
+            var videoStreams =
+                manifest.GetVideoStreams().ToList();
 
             if (!videoStreams.Any())
+            {
                 return null;
+            }
 
             var matchingStreams = videoStreams
                 .Where(s => s.VideoQuality.MaxHeight == targetHeight)
                 .ToList();
 
-            // If no exact resolution is found, take the resolutions ordered from highest to lowest
+            // Si no existe exactamente esa resolución,
+            // utilizar el stream disponible de mayor calidad.
             if (!matchingStreams.Any())
             {
                 matchingStreams = videoStreams
-                    .OrderByDescending(s => s.VideoQuality.MaxHeight)
+                    .OrderByDescending(
+                        s => s.VideoQuality.MaxHeight)
                     .ToList();
             }
 
-            // Give priority to Muxed streams (which contain both audio and video)
-            var streamWithAudio = matchingStreams.OfType<MuxedStreamInfo>().FirstOrDefault();
+            // Priorizar streams que ya contienen audio.
+            var streamWithAudio =
+                matchingStreams
+                    .OfType<MuxedStreamInfo>()
+                    .FirstOrDefault();
 
-            return streamWithAudio ?? matchingStreams.FirstOrDefault();
+            return streamWithAudio
+                   ?? matchingStreams.FirstOrDefault();
         }
         catch
         {
-            var videoStreams = manifest.GetVideoStreams().ToList();
-            return videoStreams.OrderByDescending(s => s.VideoQuality.MaxHeight).FirstOrDefault();
+            var videoStreams =
+                manifest.GetVideoStreams().ToList();
+
+            return videoStreams
+                .OrderByDescending(
+                    s => s.VideoQuality.MaxHeight)
+                .FirstOrDefault();
         }
     }
 
-    private IStreamInfo? GetAudioStream(StreamManifest manifest, string quality)
+    private IStreamInfo? GetAudioStream(
+        StreamManifest manifest,
+        string quality)
     {
         try
         {
-            var bitrate = quality.ToLower() switch
+            int bitrate = quality.ToLower() switch
             {
                 "64" => 64,
                 "128" => 128,
@@ -111,14 +157,17 @@ public class YouTubeService
                 _ => 128
             };
 
-            var audioStreams = manifest.GetAudioStreams()
-                .Where(s => s.Bitrate.KiloBitsPerSecond >= bitrate)
+            var audioStreams = manifest
+                .GetAudioStreams()
+                .Where(
+                    s => s.Bitrate.KiloBitsPerSecond >= bitrate)
                 .OrderBy(s => s.Bitrate)
                 .ToList();
 
             if (!audioStreams.Any())
             {
-                audioStreams = manifest.GetAudioStreams()
+                audioStreams = manifest
+                    .GetAudioStreams()
                     .OrderByDescending(s => s.Bitrate)
                     .ToList();
             }
@@ -127,7 +176,8 @@ public class YouTubeService
         }
         catch
         {
-            return manifest.GetAudioStreams()
+            return manifest
+                .GetAudioStreams()
                 .OrderByDescending(s => s.Bitrate)
                 .FirstOrDefault();
         }
@@ -135,11 +185,17 @@ public class YouTubeService
 
     private string SanitizeFileName(string fileName)
     {
-        var invalidChars = Path.GetInvalidFileNameChars();
-        foreach (var c in invalidChars)
+        var invalidChars =
+            Path.GetInvalidFileNameChars();
+
+        foreach (var character in invalidChars)
         {
-            fileName = fileName.Replace(c.ToString(), "");
+            fileName =
+                fileName.Replace(
+                    character.ToString(),
+                    string.Empty);
         }
+
         return fileName;
     }
 }

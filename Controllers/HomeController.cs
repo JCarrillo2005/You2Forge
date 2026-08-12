@@ -1,80 +1,105 @@
+using System.Diagnostics;
 using MediaForge.Models;
 using MediaForge.Services;
 using Microsoft.AspNetCore.Mvc;
-using System.Diagnostics;
 
-namespace MediaForge.Controllers
+namespace MediaForge.Controllers;
+
+public class HomeController : Controller
 {
-    public class HomeController : Controller
+    private readonly ILogger<HomeController> _logger;
+    private readonly YouTubeService _youtubeService;
+
+    public HomeController(
+        ILogger<HomeController> logger,
+        YouTubeService youtubeService)
     {
-        private readonly ILogger<HomeController> _logger;
-        private readonly YouTubeService _youtubeService;
+        _logger = logger;
+        _youtubeService = youtubeService;
+    }
 
-        public HomeController(ILogger<HomeController> logger, YouTubeService youtubeService)
-        {
-            _logger = logger;
-            _youtubeService = youtubeService;
-        }
+    public IActionResult Index()
+    {
+        return View();
+    }
 
-        public IActionResult Index()
+    [HttpPost]
+    public async Task<IActionResult> Process(
+        [FromBody] MediaRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Url))
         {
-            return View();
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> Process([FromBody] MediaRequest request)
-        {
-            try
+            return BadRequest(new
             {
-                // Validate URL 
-                if (string.IsNullOrWhiteSpace(request.Url))
-                    return BadRequest("La URL es obligatoria.");
+                success = false,
+                message = "La URL es obligatoria."
+            });
+        }
 
-                // Validate YouTube URL format
-                if (!IsValidYouTubeUrl(request.Url))
-                    return BadRequest("La URL no es válida. Debe ser de YouTube.");
+        if (string.IsNullOrWhiteSpace(request.Format))
+        {
+            return BadRequest(new
+            {
+                success = false,
+                message = "El formato es obligatorio."
+            });
+        }
 
-                // Download the video
-                var downloadPath = await _youtubeService.DownloadVideoAsync(
+        if (string.IsNullOrWhiteSpace(request.Quality))
+        {
+            return BadRequest(new
+            {
+                success = false,
+                message = "La calidad es obligatoria."
+            });
+        }
+
+        try
+        {
+            var result =
+                await _youtubeService.DownloadVideoAsync(
                     request.Url,
                     request.Format,
-                    request.Quality
-                );
+                    request.Quality);
 
-                // Generate the download URL based on the request
-                var downloadUrl = $"{Request.Scheme}://{Request.Host}{downloadPath}";
-
-                return Ok(new
-                {
-                    message = "¡Descarga completada exitosamente!",
-                    downloadUrl = downloadUrl,
-                    url = request.Url,
-                    format = request.Format,
-                    quality = request.Quality
-                });
-            }
-            catch (Exception ex)
+            return Ok(new
             {
-                _logger.LogError(ex, "Error al procesar la solicitud");
-                return BadRequest($"Error: {ex.Message}");
-            }
+                success = true,
+                message = "Procesamiento completado.",
+                file = result
+            });
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Error procesando el contenido.");
 
-        private bool IsValidYouTubeUrl(string url)
-        {
-            return url.Contains("youtube.com/watch") ||
-                   url.Contains("youtu.be/") ||
-                   url.Contains("youtube.com/playlist");
+            return BadRequest(new
+            {
+                success = false,
+                message = ex.Message
+            });
         }
-        public IActionResult Privacy()
-        {
-            return View();
-        }
+    }
 
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-        }
+    public IActionResult Privacy()
+    {
+        return View();
+    }
+
+    [ResponseCache(
+        Duration = 0,
+        Location = ResponseCacheLocation.None,
+        NoStore = true)]
+    public IActionResult Error()
+    {
+        return View(
+            new ErrorViewModel
+            {
+                RequestId =
+                    Activity.Current?.Id
+                    ?? HttpContext.TraceIdentifier
+            });
     }
 }

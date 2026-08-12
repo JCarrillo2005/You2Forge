@@ -1,65 +1,119 @@
-﻿// Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
-// for details on configuring this project to bundle and minify static web assets.
+﻿document.addEventListener("DOMContentLoaded", function () {
 
-// Write your JavaScript code.
+    const processButton =
+        document.getElementById("processButton");
 
-document.addEventListener("DOMContentLoaded", function () {
+    const urlInput =
+        document.getElementById("mediaUrl");
 
-    const processButton = document.getElementById("processButton");
+    const formatInput =
+        document.getElementById("format");
+
+    const qualityInput =
+        document.getElementById("quality");
+
+    const statusMessage =
+        document.getElementById("statusMessage");
+
 
     processButton.addEventListener("click", async function () {
 
-        const url = document.getElementById("mediaUrl").value;
-        const format = document.getElementById("format").value;
-        const quality = document.getElementById("quality").value;
+        const url = urlInput.value.trim();
+        const format = formatInput.value;
+        const quality = qualityInput.value;
 
-        const statusMessage = document.getElementById("statusMessage");
 
-        if (!url.trim()) {
-            statusMessage.textContent = "Debes ingresar una URL.";
+        // Validar URL
+        if (!url) {
+
+            statusMessage.textContent =
+                "Debes ingresar una URL.";
+
             return;
         }
 
-        statusMessage.textContent = "Procesando solicitud...";
+
+        // Mostrar estado
+        statusMessage.textContent =
+            "Procesando contenido...";
+
+
+        // Desactivar botón
+        processButton.disabled = true;
+
 
         const request = {
+
             url: url,
+
             format: format,
+
             quality: quality
+
         };
+
 
         try {
 
-            const response = await fetch("/Home/Process", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(request)
-            });
+            const response = await fetch(
+                "/Home/Process",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify(request)
+                }
+            );
+
+
+            const result =
+                await response.json();
+
 
             if (!response.ok) {
 
-                const error = await response.text();
-
-                statusMessage.textContent = error;
+                statusMessage.textContent =
+                    result.message ||
+                    "Ocurrió un error.";
 
                 return;
             }
 
-            const result = await response.json();
-
-            statusMessage.textContent = result.message;
-
-            console.log(result);
-
-        } catch (error) {
-
-            console.error(error);
 
             statusMessage.textContent =
-                "Ocurrió un error al comunicarse con el servidor.";
+                result.message;
+
+
+            console.log(
+                "Respuesta del servidor:",
+                result
+            );
+
+
         }
+        catch (error) {
+
+            console.error(
+                "Error:",
+                error
+            );
+
+
+            statusMessage.textContent =
+                "No se pudo comunicar con el servidor.";
+
+        }
+        finally {
+
+            processButton.disabled = false;
+
+        }
+
     });
 
 });
