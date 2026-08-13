@@ -9,6 +9,7 @@ builder.Services.AddControllersWithViews()
 
 // Register services
 builder.Services.AddScoped<MediaForge.Services.YouTubeService>();
+builder.Services.AddScoped<MediaForge.Services.MediaConversionService>();
 
 var app = builder.Build();
 
